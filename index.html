@@ -133,11 +133,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-300 mb-1">Student Full Name *</label>
-                        <input id="login-student-name" type="text" value="Aarav Kulkarni" placeholder="e.g. Aarav Kulkarni" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500">
+                        <input id="login-student-name" type="text" value="" placeholder="Enter your full name" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-300 mb-1">Roll Number / Division *</label>
-                        <input id="login-student-roll" type="text" value="FY-CS-42" placeholder="e.g. FY-CS-42" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500">
+                        <input id="login-student-roll" type="text" value="" placeholder="Enter roll number" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-orange-500">
                     </div>
                 </div>
             </div>
@@ -235,7 +235,7 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-[11px] uppercase tracking-wider font-bold bg-black/20 px-2.5 py-0.5 rounded-full">Page 1 • Student Portal</span>
                             <span id="student-welcome-badge" class="text-[11px] font-bold bg-white text-orange-600 px-2.5 py-0.5 rounded-full shadow-sm">
-                                👤 Aarav Kulkarni (FY-CS-42)
+                                👤 Student
                             </span>
                         </div>
                         <h2 class="text-xl sm:text-2xl font-extrabold mt-1.5">Order Before the Bell Rings! ⚡</h2>
@@ -300,7 +300,7 @@
                             <div class="bg-orange-50/70 border border-orange-200/80 rounded-xl p-2.5 flex items-center justify-between gap-2">
                                 <div class="min-w-0">
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-orange-600">Ordering As (Logged In)</p>
-                                    <input id="student-name" type="text" value="Aarav Kulkarni (FY-CS-42)" readonly class="w-full bg-transparent font-bold text-slate-800 text-xs sm:text-sm focus:outline-none truncate">
+                                    <input id="student-name" type="text" value="" readonly class="w-full bg-transparent font-bold text-slate-800 text-xs sm:text-sm focus:outline-none truncate">
                                 </div>
                                 <button onclick="logoutToLoginScreen()" class="shrink-0 text-[11px] font-bold text-orange-600 hover:underline">Change</button>
                             </div>
@@ -493,7 +493,7 @@
             <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div>
                     <p class="text-[10px] text-slate-400 font-semibold uppercase">Student Name</p>
-                    <p id="bill-student" class="font-bold text-slate-800 truncate">Aarav Kulkarni</p>
+                    <p id="bill-student" class="font-bold text-slate-800 truncate">Student</p>
                 </div>
                 <div class="text-right">
                     <p class="text-[10px] text-slate-400 font-semibold uppercase">Bill No / Time</p>
@@ -614,13 +614,13 @@
             }
         ];
 
-        let cart = [{ id: 2, qty: 1 }];
+        let cart = [];
         let selectedCategory = 'All';
         let nextTokenNumber = 104;
         let selectedLoginMode = 'student';
         let currentStudent = {
-            name: "Aarav Kulkarni",
-            roll: "FY-CS-42"
+            name: "",
+            roll: ""
         };
         let syncRoomCode = "PUNE-101";
         let lastSyncTimestamp = 0;
@@ -899,7 +899,11 @@
                     if (menuItems[idx]) menuItems[idx].inStock = savedItem.inStock;
                 });
             }
-            if (parsed.currentStudent && parsed.currentStudent.name) {
+            if (
+                parsed.currentStudent &&
+                parsed.currentStudent.name &&
+                !(parsed.currentStudent.name === "Aarav Kulkarni" && parsed.currentStudent.roll === "FY-CS-42")
+            ) {
                 currentStudent = parsed.currentStudent;
                 syncStudentIdentityUI();
             }
@@ -949,14 +953,15 @@
         }
 
         function syncStudentIdentityUI() {
-            const fullLabel = `${currentStudent.name} (${currentStudent.roll})`;
+            const hasStudent = currentStudent.name && currentStudent.roll;
+            const fullLabel = hasStudent ? `${currentStudent.name} (${currentStudent.roll})` : "Student";
             const nameInput = document.getElementById('login-student-name');
             const rollInput = document.getElementById('login-student-roll');
             const trayStudentInput = document.getElementById('student-name');
             const welcomeBadge = document.getElementById('student-welcome-badge');
 
-            if (nameInput && document.activeElement !== nameInput) nameInput.value = currentStudent.name;
-            if (rollInput && document.activeElement !== rollInput) rollInput.value = currentStudent.roll;
+            if (nameInput && document.activeElement !== nameInput) nameInput.value = currentStudent.name || "";
+            if (rollInput && document.activeElement !== rollInput) rollInput.value = currentStudent.roll || "";
             if (trayStudentInput) trayStudentInput.value = fullLabel;
             if (welcomeBadge) welcomeBadge.textContent = `👤 ${fullLabel}`;
         }
