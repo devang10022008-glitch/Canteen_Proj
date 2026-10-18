@@ -142,6 +142,23 @@
                 </div>
             </div>
 
+            <!-- Cross-Device Cloud Sync Room Box -->
+            <div class="bg-emerald-950/40 border border-emerald-700/50 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider">Cross-Device Live Cloud Sync</h3>
+                    </div>
+                    <p class="text-[11px] text-slate-300">
+                        Open this site on your <strong>Phone (Student)</strong> and <strong>Laptop (Canteen)</strong> with the same Room Code to sync orders live.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <label class="text-[11px] font-semibold text-emerald-300">Room Code:</label>
+                    <input id="login-sync-room" type="text" value="PUNE-101" onchange="changeSyncRoom(this.value)" class="w-28 px-3 py-1.5 rounded-xl bg-slate-900 border border-emerald-600/60 text-emerald-300 font-mono font-bold text-xs uppercase text-center focus:outline-none focus:border-emerald-400">
+                </div>
+            </div>
+
             <!-- Single Click Login Button -->
             <div class="pt-1">
                 <button onclick="enterAppFromLogin()" class="w-full py-3.5 px-6 rounded-2xl bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg transition flex items-center justify-center gap-2">
@@ -179,9 +196,12 @@
                 <!-- Database Status Indicator & Switch Login Button -->
                 <div class="flex items-center gap-2">
                     <span id="db-status-badge" class="px-2.5 py-1.5 rounded-xl bg-emerald-950/90 border border-emerald-700/60 text-emerald-300 text-[11px] font-semibold flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span id="db-status-text">Database Active</span>
+                        <span id="db-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="db-status-text">Live Sync: PUNE-101</span>
                     </span>
+                    <button onclick="pullLatestFromCrossDeviceRelay(true)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1" title="Force sync across devices now">
+                        <span>🔄</span> <span class="hidden sm:inline">Sync</span>
+                    </button>
                     <button onclick="logoutToLoginScreen()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center gap-1.5">
                         <span>🔁</span> <span>Switch Login</span>
                     </button>
@@ -602,13 +622,194 @@
             name: "Aarav Kulkarni",
             roll: "FY-CS-42"
         };
+        let syncRoomCode = "PUNE-101";
+        let lastSyncTimestamp = 0;
+        let liveEventSource = null;
 
         // ============================================================================
-        // 2. PERMANENT BROWSER DATABASE (IndexedDB + Cookie + Session Fallback)
-        //    Ensures orders & stock DO NOT reset when the tab/browser is reopened
+        // 2. PERMANENT BROWSER DATABASE + REAL-TIME CROSS-DEVICE CLOUD RELAY
+        //    Works across different phones & laptops on GitHub Pages automatically!
         // ============================================================================
         const DB_NAME = "QuickBiteCampusDB";
         const DB_STORE = "app_state";
+        const sameDeviceChannel = typeof BroadcastChannel !== 'undefined'
+            ? new BroadcastChannel('quickbite_live_sync')
+            : null;
+
+        if (sameDeviceChannel) {
+            sameDeviceChannel.onmessage = (ev) => {
+                if (ev.data && ev.data.orders) {
+                    applyLoadedState(ev.data);
+                    renderAll();
+                }
+            };
+        }
+
+        function getRelayTopic() {
+            const cleanCode = (syncRoomCode || "PUNE-101").trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            return `quickbite_pune_canteen_v2_${cleanCode || 'pune101'}`;
+        }
+
+        function encodeCompactState(ts) {
+            const recentOrders = orders.slice(0, 20).map(o => ({
+                t: o.token,
+                x: o.txnId || `TXN408${o.token}`,
+                s: o.student,
+                l: o.slot,
+                p: o.payment,
+                st: o.status,
+                tm: o.time,
+                tot: o.total,
+                i: (o.items || []).map(item => {
+                    const found = menuItems.find(m => m.name === item.name);
+                    return found ? [found.id, item.qty] : [item.name, item.qty, item.price];
+                })
+            }));
+            return JSON.stringify({
+                v: 2,
+                ts: ts,
+                nt: nextTokenNumber,
+                m: menuItems.map(m => m.inStock ? 1 : 0),
+                o: recentOrders
+            });
+        }
+
+        function decodeCompactState(rawStr) {
+            try {
+                const data = typeof rawStr === 'string' ? JSON.parse(rawStr) : rawStr;
+                if (!data || !Array.isArray(data.o)) return null;
+                const restoredOrders = data.o.map(o => ({
+                    token: Number(o.t),
+                    txnId: o.x || `TXN408${o.t}`,
+                    student: o.s || "Student",
+                    slot: o.l || "1:15 PM Break",
+                    payment: o.p || "UPI Instant Pay",
+                    status: o.st || "pending",
+                    time: o.tm || "Just now",
+                    total: Number(o.tot) || 0,
+                    items: (o.i || []).map(entry => {
+                        if (typeof entry[0] === 'number') {
+                            const found = menuItems.find(m => m.id === entry[0]);
+                            return {
+                                name: found ? found.name : "Canteen Item",
+                                qty: Number(entry[1]) || 1,
+                                price: found ? found.price : 0
+                            };
+                        }
+                        return {
+                            name: String(entry[0]),
+                            qty: Number(entry[1]) || 1,
+                            price: Number(entry[2]) || 0
+                        };
+                    })
+                }));
+                const restoredStock = Array.isArray(data.m)
+                    ? menuItems.map((m, idx) => ({ id: m.id, inStock: data.m[idx] === 1 }))
+                    : menuItems.map(m => ({ id: m.id, inStock: m.inStock }));
+                return {
+                    orders: restoredOrders,
+                    nextTokenNumber: Number(data.nt) || 104,
+                    menuStock: restoredStock,
+                    ts: Number(data.ts) || 0
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function pushStateToCrossDeviceRelay() {
+            const nowTs = Date.now();
+            lastSyncTimestamp = nowTs;
+            const compactPayload = encodeCompactState(nowTs);
+            try {
+                await fetch(`https://ntfy.sh/${getRelayTopic()}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: compactPayload
+                });
+            } catch (e) {
+                console.warn("Cross-device push skipped:", e);
+            }
+        }
+
+        async function pullLatestFromCrossDeviceRelay(showFeedback = false) {
+            try {
+                const res = await fetch(`https://ntfy.sh/${getRelayTopic()}/json?poll=1&since=24h`);
+                if (!res.ok) return false;
+                const text = await res.text();
+                const lines = text.trim().split('\n').filter(Boolean);
+                let latestDecoded = null;
+
+                for (const line of lines) {
+                    try {
+                        const env = JSON.parse(line);
+                        if (env.event === 'message' && env.message) {
+                            const decoded = decodeCompactState(env.message);
+                            if (decoded && decoded.ts >= lastSyncTimestamp) {
+                                latestDecoded = decoded;
+                            }
+                        }
+                    } catch (err) {}
+                }
+
+                if (latestDecoded) {
+                    lastSyncTimestamp = latestDecoded.ts;
+                    applyLoadedState(latestDecoded);
+                    await saveLocalCopyOnly();
+                    renderAll();
+                    if (showFeedback) showToast(`🔄 Synced with Room ${syncRoomCode}!`, "emerald");
+                    return true;
+                } else if (showFeedback) {
+                    showToast(`✓ Room ${syncRoomCode} is already up to date.`, "slate");
+                }
+            } catch (e) {
+                if (showFeedback) showToast("Offline mode: Using local device storage.", "amber");
+            }
+            return false;
+        }
+
+        function startCrossDeviceLiveStream() {
+            if (typeof EventSource === 'undefined') return;
+            if (liveEventSource) {
+                try { liveEventSource.close(); } catch (e) {}
+            }
+
+            try {
+                liveEventSource = new EventSource(`https://ntfy.sh/${getRelayTopic()}/sse`);
+                liveEventSource.onmessage = async (event) => {
+                    try {
+                        const env = JSON.parse(event.data);
+                        if (env.event === 'message' && env.message) {
+                            const decoded = decodeCompactState(env.message);
+                            if (decoded && decoded.ts > lastSyncTimestamp) {
+                                const prevTopToken = orders.length > 0 ? orders[0].token : 0;
+                                lastSyncTimestamp = decoded.ts;
+                                applyLoadedState(decoded);
+                                await saveLocalCopyOnly();
+                                renderAll();
+
+                                if (orders.length > 0 && orders[0].token > prevTopToken) {
+                                    showToast(`📲 Live Order #${orders[0].token} received from ${orders[0].student}!`, "emerald");
+                                } else {
+                                    showToast(`🔄 Live update received from another device!`, "blue");
+                                }
+                            }
+                        }
+                    } catch (err) {}
+                };
+            } catch (e) {
+                console.warn("Live stream fallback:", e);
+            }
+        }
+
+        function changeSyncRoom(newRoom) {
+            syncRoomCode = (newRoom || "PUNE-101").trim().toUpperCase() || "PUNE-101";
+            const statusText = document.getElementById('db-status-text');
+            if (statusText) statusText.textContent = `Live Sync: ${syncRoomCode}`;
+            lastSyncTimestamp = 0;
+            pullLatestFromCrossDeviceRelay(true);
+            startCrossDeviceLiveStream();
+        }
 
         function openBrowserDB() {
             return new Promise((resolve, reject) => {
@@ -628,40 +829,59 @@
             });
         }
 
-        async function saveStateToSession() {
+        async function saveLocalCopyOnly() {
             const stateObj = {
                 orders,
                 nextTokenNumber,
                 menuStock: menuItems.map(m => ({ id: m.id, inStock: m.inStock })),
-                currentStudent
+                currentStudent,
+                syncRoomCode,
+                ts: lastSyncTimestamp || Date.now()
             };
 
-            // 1. Save to window.name for instant same-tab refreshes
             try {
                 window.name = "QUICKBITE_DATA:" + JSON.stringify(stateObj);
             } catch (e) {}
 
-            // 2. Save to Browser Cookie (persists across closed tabs on GitHub Pages)
             try {
                 const compactState = encodeURIComponent(JSON.stringify(stateObj));
                 document.cookie = `quickbite_state=${compactState}; path=/; max-age=2592000; SameSite=Lax`;
             } catch (e) {}
 
-            // 3. Save to IndexedDB (permanent browser database with high capacity)
             try {
                 const db = await openBrowserDB();
                 if (db) {
                     const tx = db.transaction(DB_STORE, "readwrite");
                     tx.objectStore(DB_STORE).put(stateObj, "main_state");
                 }
-            } catch (e) {
-                console.warn("IndexedDB save skipped:", e);
+            } catch (e) {}
+        }
+
+        async function saveStateToSession(broadcastToCloud = true) {
+            await saveLocalCopyOnly();
+
+            if (sameDeviceChannel) {
+                try {
+                    sameDeviceChannel.postMessage({
+                        orders,
+                        nextTokenNumber,
+                        menuStock: menuItems.map(m => ({ id: m.id, inStock: m.inStock }))
+                    });
+                } catch (e) {}
+            }
+
+            if (broadcastToCloud) {
+                pushStateToCrossDeviceRelay();
             }
         }
 
         function applyLoadedState(parsed) {
             if (!parsed || typeof parsed !== "object") return false;
             let applied = false;
+
+            if (parsed.ts && Number(parsed.ts) > lastSyncTimestamp) {
+                lastSyncTimestamp = Number(parsed.ts);
+            }
 
             if (Array.isArray(parsed.orders) && parsed.orders.length > 0) {
                 orders = parsed.orders;
@@ -682,6 +902,13 @@
             if (parsed.currentStudent && parsed.currentStudent.name) {
                 currentStudent = parsed.currentStudent;
                 syncStudentIdentityUI();
+            }
+            if (parsed.syncRoomCode) {
+                syncRoomCode = parsed.syncRoomCode;
+                const roomInput = document.getElementById('login-sync-room');
+                if (roomInput && document.activeElement !== roomInput) roomInput.value = syncRoomCode;
+                const statusText = document.getElementById('db-status-text');
+                if (statusText) statusText.textContent = `Live Sync: ${syncRoomCode}`;
             }
             return applied;
         }
@@ -781,6 +1008,13 @@
         }
 
         function enterAppFromLogin() {
+            const roomInput = document.getElementById('login-sync-room');
+            if (roomInput && roomInput.value.trim()) {
+                syncRoomCode = roomInput.value.trim().toUpperCase();
+                const statusText = document.getElementById('db-status-text');
+                if (statusText) statusText.textContent = `Live Sync: ${syncRoomCode}`;
+            }
+
             if (selectedLoginMode === 'student' || selectedLoginMode === 'split') {
                 const enteredName = document.getElementById('login-student-name').value.trim();
                 const enteredRoll = document.getElementById('login-student-roll').value.trim();
@@ -791,7 +1025,7 @@
                 }
                 currentStudent = { name: enteredName, roll: enteredRoll };
                 syncStudentIdentityUI();
-                saveStateToSession();
+                saveStateToSession(false);
             }
 
             document.getElementById('login-screen').classList.add('hidden');
@@ -1334,6 +1568,9 @@
         window.onload = async function () {
             await loadStateFromSession();
             renderAll();
+            // Pull latest shared state from the cross-device cloud room & subscribe to live updates
+            await pullLatestFromCrossDeviceRelay(false);
+            startCrossDeviceLiveStream();
             if (window.startCloudSyncAfterLocalLoad) {
                 window.startCloudSyncAfterLocalLoad();
             }
@@ -1409,7 +1646,7 @@
                                 const item = menuItems.find(m => m.id === s.id);
                                 if (item) item.inStock = s.inStock;
                             });
-                            saveStateToSession();
+                            saveStateToSession(false);
                             renderAll();
                         }
                     }, (err) => console.warn("Stock sync fallback:", err));
@@ -1440,7 +1677,7 @@
                         cloudOrders.sort((a, b) => b.token - a.token);
                         orders = cloudOrders;
                         nextTokenNumber = maxTok + 1;
-                        saveStateToSession();
+                        saveStateToSession(false);
                         renderAll();
                     }, (err) => {
                         console.warn("Cloud listener fallback:", err);
