@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>QuickBite Campus | Smart Canteen 2-Page System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        @keyframes pulse-ready {
+            0%, 100% { border-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.25); }
+            50% { border-color: #6ee7b7; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+        .token-ready-card {
+            animation: pulse-ready 1.8s infinite;
+        }
+        /* Print styles so clicking Print Bill prints only the receipt cleanly */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #bill-modal-card, #bill-modal-card * {
+                visibility: visible;
+            }
+            #bill-modal-card {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col pb-6">
+
+    <!-- =======================================================
+         STARTING LOGIN PORTAL SCREEN (NO PASSWORD REQUIRED)
+         ======================================================= -->
+    <div id="login-screen" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        <div class="max-w-3xl w-full bg-slate-900/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            
+            <!-- Brand Header -->
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-3xl mx-auto shadow-lg">
+                    🍱
+                </div>
+                <span class="inline-block text-[11px] uppercase tracking-widest font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30 px-3 py-0.5 rounded-full">
+                    DT & IL Project • Smart Cafeteria Solution
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">QuickBite Campus Portal</h1>
+                <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                    Select a portal mode below and click <strong class="text-white">Login</strong> to enter (no password required).
+                </p>
+            </div>
+
+            <!-- 3 Portal Selection Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <!-- Option 1: User Page -->
+                <div id="login-card-student" onclick="selectLoginOption('student')" class="cursor-pointer rounded-2xl p-4 border-2 border-orange-500 bg-slate-800/90 hover:bg-slate-800 transition flex flex-col justify-between gap-3 shadow-lg">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-xl">📱</span>
+                            <span id="radio-student" class="text-[11px] font-bold bg-orange-500 text-white px-2.5 py-0.5 rounded-full">Selected</span>
+                        </div>
+                        <h2 class="font-bold text-base text-white">1. User Page</h2>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Student portal to pre-order meals, get an instant payment bill, and track digital tokens.
+                        </p>
+                    </div>
+                    <span class="text-[11px] font-semibold text-orange-400">Student View →</span>
+                </div>
+
+                <!-- Option 2: Canteen Page -->
+                <div id="login-card-canteen" onclick="selectLoginOption('canteen')" class="cursor-pointer rounded-2xl p-4 border-2 border-slate-700 bg-slate-800/50 hover:bg-slate-800 transition flex flex-col justify-between gap-3">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xl">👨‍🍳</span>
+                            <span id="radio-canteen" class="text-[11px] font-bold bg-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full">Select</span>
+                        </div>
+                        <h2 class="font-bold text-base text-white">2. Canteen Page</h2>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Kitchen staff dashboard to prepare incoming tokens, mark orders ready, and view stored records.
+                        </p>
+                    </div>
+                    <span class="text-[11px] font-semibold text-emerald-400">Staff View →</span>
+                </div>
+
+                <!-- Option 3: Split Screen -->
+                <div id="login-card-split" onclick="selectLoginOption('split')" class="cursor-pointer rounded-2xl p-4 border-2 border-slate-700 bg-slate-800/50 hover:bg-slate-800 transition flex flex-col justify-between gap-3">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xl">🖥️</span>
+                            <span id="radio-split" class="text-[11px] font-bold bg-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full">Select</span>
+                        </div>
+                        <h2 class="font-bold text-base text-white">3. Split Screen</h2>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Side-by-side live demo view showing both Student and Canteen pages together.
+                        </p>
+                    </div>
+                    <span class="text-[11px] font-semibold text-indigo-400">Demo View →</span>
+                </div>
+            </div>
+
+            <!-- Single Click Login Button -->
+            <div class="pt-2">
+                <button onclick="enterAppFromLogin()" class="w-full py-3.5 px-6 rounded-2xl bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg transition flex items-center justify-center gap-2">
+                    <span>🔓 Login to Selected Portal</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================
+         MAIN APPLICATION WRAPPER (HIDDEN UNTIL LOGIN)
+         ======================================================= -->
+    <div id="app-wrapper" class="hidden flex-1 flex flex-col">
+
+        <!-- Top Navigation Header -->
+        <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500 flex items-center justify-center text-lg sm:text-xl font-bold shadow">
+                        🍱
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-bold text-base sm:text-lg leading-tight">QuickBite Campus</h1>
+                            <span id="active-mode-badge" class="text-[10px] bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full font-semibold">
+                                📱 1. User Page
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">DT & IL Project • 2-Page Cafeteria Queue Solution</p>
+                    </div>
+                </div>
+
+                <!-- Database Status Indicator & Switch Login Button -->
+                <div class="flex items-center gap-2">
+                    <span id="db-status-badge" class="px-2.5 py-1.5 rounded-xl bg-emerald-950/90 border border-emerald-700/60 text-emerald-300 text-[11px] font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="db-status-text">Database Active</span>
+                    </span>
+                    <button onclick="logoutToLoginScreen()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+                        <span>🔁</span> <span>Switch Login</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Overhead Express Pickup Counter Ticker -->
+        <div class="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 text-white px-3 sm:px-6 py-2 border-b border-emerald-700/40">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
+                    <span class="font-bold text-emerald-300 uppercase tracking-wider">Express Counter — Ready Tokens:</span>
+                </div>
+                <div id="live-ready-tokens" class="flex items-center gap-1.5 flex-wrap">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Two-Page Container -->
+        <main id="main-container" class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 gap-6">
+
+            <!-- =======================================================
+                 PAGE 1: USER PAGE (STUDENT PRE-ORDER INTERFACE)
+                 ======================================================= -->
+            <section id="student-page" class="space-y-5">
+                <!-- Hero Banner -->
+                <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 sm:p-6 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider font-bold bg-black/20 px-2.5 py-0.5 rounded-full">Page 1 • Student Portal</span>
+                        <h2 class="text-xl sm:text-2xl font-extrabold mt-1.5">Order Before the Bell Rings! ⚡</h2>
+                        <p class="text-orange-50 text-xs sm:text-sm mt-0.5">Skip the 25-minute billing line. Pre-order online, get an instant digital bill, and pick up your tray.</p>
+                    </div>
+                    <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-2.5 text-center shrink-0 flex sm:block items-center justify-between">
+                        <p class="text-xs text-orange-100">Express Pickup Time</p>
+                        <p class="text-lg sm:text-xl font-black">~2 Mins</p>
+                    </div>
+                </div>
+
+                <!-- Student Live Order Token Tracker -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
+                            <span>🎟️</span> Your Active Orders & Digital Bills
+                        </h3>
+                        <span class="text-[11px] text-slate-500">Tap "🧾 View Bill" on any order</span>
+                    </div>
+                    <div id="student-active-orders" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Menu & Checkout Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left 2 Columns: Food Menu -->
+                    <div class="lg:col-span-2 space-y-3.5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 class="font-bold text-base sm:text-lg text-slate-800">Today's Live Menu</h3>
+                            <!-- Category Filter Buttons -->
+                            <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                                <button onclick="filterMenu('All')" id="cat-All" class="cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white">All Items</button>
+                                <button onclick="filterMenu('Quick Snacks')" id="cat-Quick Snacks" class="cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-600">Snacks</button>
+                                <button onclick="filterMenu('Meals')" id="cat-Meals" class="cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-600">Lunch Meals</button>
+                                <button onclick="filterMenu('Beverages')" id="cat-Beverages" class="cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-600">Beverages</button>
+                            </div>
+                        </div>
+
+                        <!-- Food Items Grid -->
+                        <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Pre-Order Tray & Checkout -->
+                    <div id="checkout-tray-card" class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm h-fit lg:sticky lg:top-20 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                                <span>🛒</span> Your Pre-Order Tray
+                            </h3>
+                            <button onclick="clearCart()" class="text-xs text-rose-600 hover:underline font-semibold">Clear Tray</button>
+                        </div>
+
+                        <!-- Selected Cart Items -->
+                        <div id="cart-items" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                            <!-- Populated by JavaScript -->
+                        </div>
+
+                        <!-- Student Form Inputs -->
+                        <div class="space-y-3 pt-3 border-t border-slate-100 text-xs sm:text-sm">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Student Name & Roll No</label>
+                                <input id="student-name" type="text" value="Aarav Kulkarni (FY-CS-42)" placeholder="Enter Name & Roll No" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Break Pickup Slot</label>
+                                    <select id="pickup-slot" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        <option value="Now (Express)">Now (In 5 mins)</option>
+                                        <option value="1:15 PM Break" selected>1:15 PM Lunch</option>
+                                        <option value="1:30 PM Break">1:30 PM Lunch</option>
+                                        <option value="3:45 PM Break">3:45 PM Tea Break</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Payment Method</label>
+                                    <select id="payment-mode" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        <option value="UPI Instant Pay">⚡ UPI Instant</option>
+                                        <option value="Campus ID Wallet">🪪 Campus Wallet</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total & Submit Button -->
+                        <div class="bg-slate-50 p-3 rounded-xl space-y-1 border border-slate-200/70">
+                            <div class="flex justify-between text-xs text-slate-500">
+                                <span>Est. Preparation Time</span>
+                                <span id="cart-prep-time" class="font-semibold text-slate-700">0 mins</span>
+                            </div>
+                            <div class="flex justify-between text-base font-extrabold text-slate-900">
+                                <span>Total Payable</span>
+                                <span id="cart-total">₹0</span>
+                            </div>
+                        </div>
+
+                        <button onclick="placeOrder()" class="w-full py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <span>💳 Pay & Generate Bill + Token</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =======================================================
+                 PAGE 2: CANTEEN PAGE (STAFF MANAGEMENT INTERFACE)
+                 ======================================================= -->
+            <section id="canteen-page" class="hidden space-y-5">
+                <!-- Staff Header Card -->
+                <div class="bg-slate-900 rounded-2xl p-4 sm:p-6 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">Page 2 • Canteen Staff KDS</span>
+                        <h2 class="text-xl sm:text-2xl font-extrabold mt-1.5">Canteen Kitchen Display System 👨‍🍳</h2>
+                        <p class="text-slate-400 text-xs sm:text-sm mt-0.5">Manage incoming student tokens, update cooking status, and view automatically stored order records.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="addSimulatedRushOrder()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 text-amber-300 transition">
+                            ⚡ + Simulate Incoming Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canteen Summary Counters -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs text-slate-500 font-medium">1. New Orders</p>
+                        <p id="stat-pending" class="text-2xl font-black text-amber-600 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs text-slate-500 font-medium">2. Cooking Now</p>
+                        <p id="stat-preparing" class="text-2xl font-black text-blue-600 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs text-slate-500 font-medium">3. Ready for Pickup</p>
+                        <p id="stat-ready" class="text-2xl font-black text-emerald-600 mt-0.5">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-xs text-slate-500 font-medium">Total Collection</p>
+                        <p id="stat-revenue" class="text-2xl font-black text-slate-800 mt-0.5">₹0</p>
+                    </div>
+                </div>
+
+                <!-- 3-Column Order Queue Board -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Stage 1: Pending -->
+                    <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-amber-950 text-xs sm:text-sm">⏳ 1. New Orders</h3>
+                            <span id="col-count-pending" class="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="canteen-col-pending" class="space-y-2.5"></div>
+                    </div>
+
+                    <!-- Stage 2: Preparing -->
+                    <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-blue-950 text-xs sm:text-sm">🍳 2. Preparing in Kitchen</h3>
+                            <span id="col-count-preparing" class="text-xs font-bold bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="canteen-col-preparing" class="space-y-2.5"></div>
+                    </div>
+
+                    <!-- Stage 3: Ready -->
+                    <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-emerald-950 text-xs sm:text-sm">🔔 3. Ready at Counter</h3>
+                            <span id="col-count-ready" class="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="canteen-col-ready" class="space-y-2.5"></div>
+                    </div>
+                </div>
+
+                <!-- Live Stock Availability Control -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                    <div class="mb-3">
+                        <h3 class="font-bold text-slate-800 text-sm">Menu Stock Control (Tap to Toggle Sold Out)</h3>
+                        <p class="text-xs text-slate-500">Marking an item "Sold Out" immediately updates the database and disables it on the Student Page.</p>
+                    </div>
+                    <div id="canteen-stock-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Stored Orders Database Table -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">🗄️ Stored Orders Database Log</h3>
+                            <p class="text-xs text-slate-500">All student orders and generated bills are automatically saved in the system database.</p>
+                        </div>
+                        <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                            ✓ Auto-Saved
+                        </span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                    <th class="p-2.5 font-bold">Token</th>
+                                    <th class="p-2.5 font-bold">Student</th>
+                                    <th class="p-2.5 font-bold">Items Ordered</th>
+                                    <th class="p-2.5 font-bold">Break Slot</th>
+                                    <th class="p-2.5 font-bold">Amount</th>
+                                    <th class="p-2.5 font-bold">Status</th>
+                                    <th class="p-2.5 font-bold text-right">Bill</th>
+                                </tr>
+                            </thead>
+                            <tbody id="database-log-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div> <!-- End of #app-wrapper -->
+
+    <!-- =======================================================
+         DIGITAL BILL / PAYMENT RECEIPT MODAL
+         ======================================================= -->
+    <div id="bill-modal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div id="bill-modal-card" class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 my-auto animate-[fadeIn_0.2s_ease-out]">
+            
+            <!-- Top Success Banner -->
+            <div class="text-center space-y-1 border-b border-dashed border-slate-200 pb-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto font-bold">
+                    ✓
+                </div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Payment Successful • Official Receipt</p>
+                <h3 class="text-lg font-extrabold text-slate-900">QuickBite Campus Canteen</h3>
+                <p class="text-xs text-slate-400">DT & IL Smart Cafeteria Queue System</p>
+            </div>
+
+            <!-- Big Digital Token Callout -->
+            <div class="bg-slate-900 text-white rounded-2xl p-3.5 flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Digital Pickup Token</p>
+                    <p id="bill-token" class="text-2xl sm:text-3xl font-black text-orange-400">#104</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Pickup Slot</p>
+                    <p id="bill-slot" class="text-xs sm:text-sm font-bold text-white mt-0.5">1:15 PM Break</p>
+                </div>
+            </div>
+
+            <!-- Customer & Transaction Metadata -->
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div>
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase">Student Name</p>
+                    <p id="bill-student" class="font-bold text-slate-800 truncate">Aarav Kulkarni</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase">Bill No / Time</p>
+                    <p id="bill-meta" class="font-bold text-slate-800">INV-104 • 1:05 PM</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase">Payment Method</p>
+                    <p id="bill-payment" class="font-semibold text-emerald-700">⚡ UPI Instant Pay</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase">Transaction ID</p>
+                    <p id="bill-txn" class="font-mono font-semibold text-slate-600">TXN894210</p>
+                </div>
+            </div>
+
+            <!-- Itemized Bill Table -->
+            <div class="border-t border-b border-dashed border-slate-200 py-3">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="text-slate-400 uppercase text-[10px] border-b border-slate-100">
+                            <th class="pb-1.5 text-left font-bold">Item</th>
+                            <th class="pb-1.5 text-center font-bold">Qty</th>
+                            <th class="pb-1.5 text-right font-bold">Rate</th>
+                            <th class="pb-1.5 text-right font-bold">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bill-items-tbody" class="divide-y divide-slate-100 text-slate-700">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Paid Summary -->
+            <div class="space-y-1 text-xs">
+                <div class="flex justify-between text-slate-500">
+                    <span>Canteen Convenience Fee</span>
+                    <span class="font-semibold text-emerald-600">₹0 (Free)</span>
+                </div>
+                <div class="flex justify-between items-center text-base font-black text-slate-900 pt-1">
+                    <span>Total Amount Paid</span>
+                    <span id="bill-total" class="text-lg text-emerald-600">₹65</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2 no-print">
+                <button onclick="window.print()" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                    <span>🖨️</span> Print Bill
+                </button>
+                <button onclick="closeBillModal()" class="flex-1 py-2.5 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md transition">
+                    Done (Track Token)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-4 left-4 sm:left-auto z-50 space-y-2 pointer-events-none flex flex-col items-end no-print"></div>
+
+    <script>
+        // ============================================================================
+        // 1. MENU DATA & INITIAL STATE (Simple & Easy to Explain in Viva)
+        // ============================================================================
+        const menuItems = [
+            { id: 1, name: "Garama-Garam Vada Pav (2 pcs)", category: "Quick Snacks", price: 30, prepTime: 2, emoji: "🍔", inStock: true, tag: "Fastest" },
+            { id: 2, name: "Puneri Special Misal Pav", category: "Meals", price: 65, prepTime: 5, emoji: "🍲", inStock: true, tag: "Bestseller" },
+            { id: 3, name: "Cheese Masala Maggi", category: "Quick Snacks", price: 50, prepTime: 4, emoji: "🍜", inStock: true, tag: "" },
+            { id: 4, name: "Mini Deluxe Veg Thali", category: "Meals", price: 90, prepTime: 6, emoji: "🍱", inStock: true, tag: "Lunch Fav" },
+            { id: 5, name: "Thick Cold Coffee", category: "Beverages", price: 45, prepTime: 2, emoji: "🧋", inStock: true, tag: "Chilled" },
+            { id: 6, name: "Kanda Poha with Sev", category: "Quick Snacks", price: 30, prepTime: 2, emoji: "🥣", inStock: true, tag: "" },
+            { id: 7, name: "Veg Cheese Grilled Sandwich", category: "Quick Snacks", price: 60, prepTime: 5, emoji: "🥪", inStock: true, tag: "" },
+            { id: 8, name: "Cutting Masala Chai", category: "Beverages", price: 15, prepTime: 1, emoji: "☕", inStock: true, tag: "" }
+        ];
+
+        // Default sample orders for immediate demonstration
+        let orders = [
+            {
+                token: 101,
+                txnId: "TXN408129",
+                student: "Sneha Deshmukh (IT-14)",
+                slot: "1:15 PM Break",
+                payment: "UPI Instant Pay",
+                status: "ready",
+                time: "1:08 PM",
+                total: 95,
+                items: [
+                    { name: "Puneri Special Misal Pav", qty: 1, price: 65 },
+                    { name: "Garama-Garam Vada Pav (2 pcs)", qty: 1, price: 30 }
+                ]
+            },
+            {
+                token: 102,
+                txnId: "TXN408392",
+                student: "Rohan Patil (ENTC-09)",
+                slot: "1:15 PM Break",
+                payment: "UPI Instant Pay",
+                status: "preparing",
+                time: "1:10 PM",
+                total: 135,
+                items: [
+                    { name: "Mini Deluxe Veg Thali", qty: 1, price: 90 },
+                    { name: "Thick Cold Coffee", qty: 1, price: 45 }
+                ]
+            },
+            {
+                token: 103,
+                txnId: "TXN408774",
+                student: "Priya Nair (CS-88)",
+                slot: "1:30 PM Break",
+                payment: "Campus ID Wallet",
+                status: "pending",
+                time: "1:12 PM",
+                total: 65,
+                items: [
+                    { name: "Cheese Masala Maggi", qty: 1, price: 50 },
+                    { name: "Cutting Masala Chai", qty: 1, price: 15 }
+                ]
+            }
+        ];
+
+        let cart = [{ id: 2, qty: 1 }];
+        let selectedCategory = 'All';
+        let nextTokenNumber = 104;
+        let selectedLoginMode = 'student';
+
+        // ============================================================================
+        // 2. AUTOMATIC PERSISTENT STORAGE (Works on GitHub Pages & Google Sites)
+        // ============================================================================
+        function saveStateToSession() {
+            try {
+                const payload = JSON.stringify({ orders, nextTokenNumber, menuItems });
+                window.name = "QUICKBITE_DATA:" + payload;
+            } catch (e) {
+                console.warn("Session save skipped:", e);
+            }
+        }
+
+        function loadStateFromSession() {
+            try {
+                if (window.name && window.name.startsWith("QUICKBITE_DATA:")) {
+                    const parsed = JSON.parse(window.name.replace("QUICKBITE_DATA:", ""));
+                    if (Array.isArray(parsed.orders) && parsed.orders.length > 0) {
+                        orders = parsed.orders;
+                        nextTokenNumber = parsed.nextTokenNumber || 104;
+                    }
+                    if (Array.isArray(parsed.menuItems)) {
+                        parsed.menuItems.forEach((savedItem, idx) => {
+                            if (menuItems[idx]) menuItems[idx].inStock = savedItem.inStock;
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn("Session load skipped:", e);
+            }
+        }
+
+        // ============================================================================
+        // 3. LOGIN SCREEN & PAGE SWITCHING FUNCTIONS
+        // ============================================================================
+        function selectLoginOption(mode) {
+            selectedLoginMode = mode;
+            const modes = ['student', 'canteen', 'split'];
+            const borderColors = {
+                student: 'border-orange-500 bg-slate-800/90',
+                canteen: 'border-emerald-500 bg-slate-800/90',
+                split: 'border-indigo-500 bg-slate-800/90'
+            };
+            const badgeColors = {
+                student: 'bg-orange-500 text-white',
+                canteen: 'bg-emerald-500 text-white',
+                split: 'bg-indigo-500 text-white'
+            };
+
+            modes.forEach(m => {
+                const card = document.getElementById('login-card-' + m);
+                const radio = document.getElementById('radio-' + m);
+                if (m === mode) {
+                    card.className = `cursor-pointer rounded-2xl p-4 border-2 ${borderColors[m]} transition flex flex-col justify-between gap-3 shadow-lg`;
+                    radio.className = `text-[11px] font-bold ${badgeColors[m]} px-2.5 py-0.5 rounded-full`;
+                    radio.textContent = 'Selected';
+                } else {
+                    card.className = 'cursor-pointer rounded-2xl p-4 border-2 border-slate-700 bg-slate-800/50 hover:bg-slate-800 transition flex flex-col justify-between gap-3';
+                    radio.className = 'text-[11px] font-bold bg-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full';
+                    radio.textContent = 'Select';
+                }
+            });
+        }
+
+        function enterAppFromLogin() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+            switchPage(selectedLoginMode);
+        }
+
+        function logoutToLoginScreen() {
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchPage(mode) {
+            const studentSec = document.getElementById('student-page');
+            const canteenSec = document.getElementById('canteen-page');
+            const mainContainer = document.getElementById('main-container');
+            const activeBadge = document.getElementById('active-mode-badge');
+
+            if (mode === 'student') {
+                studentSec.classList.remove('hidden');
+                canteenSec.classList.add('hidden');
+                mainContainer.className = "flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 gap-6";
+                if (activeBadge) {
+                    activeBadge.textContent = "📱 1. User Page";
+                    activeBadge.className = "text-[10px] bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full font-semibold";
+                }
+            } else if (mode === 'canteen') {
+                studentSec.classList.add('hidden');
+                canteenSec.classList.remove('hidden');
+                mainContainer.className = "flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 gap-6";
+                if (activeBadge) {
+                    activeBadge.textContent = "👨‍🍳 2. Canteen Page";
+                    activeBadge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold";
+                }
+            } else if (mode === 'split') {
+                studentSec.classList.remove('hidden');
+                canteenSec.classList.remove('hidden');
+                mainContainer.className = "flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start";
+                if (activeBadge) {
+                    activeBadge.textContent = "🖥️ 3. Split View";
+                    activeBadge.className = "text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold";
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderAll();
+        }
+
+        // ============================================================================
+        // 4. STUDENT MENU, CART & BILL GENERATION FUNCTIONS
+        // ============================================================================
+        function filterMenu(category) {
+            selectedCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-600";
+            });
+            const activeBtn = document.getElementById('cat-' + category);
+            if (activeBtn) {
+                activeBtn.className = "cat-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white";
+            }
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            const filtered = selectedCategory === 'All'
+                ? menuItems
+                : menuItems.filter(i => i.category === selectedCategory);
+
+            grid.innerHTML = filtered.map(item => {
+                const inCart = cart.find(c => c.id === item.id);
+                const qty = inCart ? inCart.qty : 0;
+
+                return `
+                    <div class="bg-white rounded-2xl p-3.5 border ${item.inStock ? 'border-slate-200' : 'border-slate-200 opacity-60 bg-slate-50'} shadow-sm flex flex-col justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-2xl shrink-0">
+                                ${item.emoji}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[10px] font-semibold uppercase text-slate-400">${item.category}</span>
+                                    ${item.tag ? `<span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">${item.tag}</span>` : ''}
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-sm truncate mt-0.5">${item.name}</h4>
+                                <p class="text-xs text-slate-500">⏱️ ~${item.prepTime} mins prep</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <span class="font-extrabold text-slate-900 text-base">₹${item.price}</span>
+                            ${!item.inStock ? `
+                                <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg">Sold Out</span>
+                            ` : qty === 0 ? `
+                                <button onclick="updateCart(${item.id}, 1)" class="px-3.5 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs transition shadow-sm">
+                                    + Add
+                                </button>
+                            ` : `
+                                <div class="flex items-center gap-2 bg-slate-900 text-white rounded-xl px-2 py-1">
+                                    <button onclick="updateCart(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-slate-700 flex items-center justify-center font-bold text-xs">-</button>
+                                    <span class="text-xs font-bold w-4 text-center">${qty}</span>
+                                    <button onclick="updateCart(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-orange-500 flex items-center justify-center font-bold text-xs">+</button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCart(itemId, delta) {
+            const menuItem = menuItems.find(m => m.id === itemId);
+            if (!menuItem || !menuItem.inStock) return;
+
+            const existing = cart.find(c => c.id === itemId);
+            if (existing) {
+                existing.qty += delta;
+                if (existing.qty <= 0) cart = cart.filter(c => c.id !== itemId);
+            } else if (delta > 0) {
+                cart.push({ id: itemId, qty: 1 });
+            }
+            renderAll();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderAll();
+        }
+
+        function renderCart() {
+            const cartContainer = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+            const prepEl = document.getElementById('cart-prep-time');
+
+            if (cart.length === 0) {
+                cartContainer.innerHTML = `<p class="text-center py-5 text-slate-400 text-xs">Your tray is empty. Tap "+ Add" on any item.</p>`;
+                totalEl.textContent = '₹0';
+                prepEl.textContent = '0 mins';
+                return;
+            }
+
+            let total = 0;
+            let maxPrep = 0;
+
+            cartContainer.innerHTML = cart.map(c => {
+                const item = menuItems.find(m => m.id === c.id);
+                if (!item) return '';
+                const sub = item.price * c.qty;
+                total += sub;
+                if (item.prepTime > maxPrep) maxPrep = item.prepTime;
+
+                return `
+                    <div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div class="text-xs min-w-0">
+                            <p class="font-semibold text-slate-800 truncate">${item.emoji} ${item.name}</p>
+                            <p class="text-slate-500">₹${item.price} × ${c.qty} = <strong class="text-slate-800">₹${sub}</strong></p>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="updateCart(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-bold text-xs">-</button>
+                            <span class="text-xs font-bold w-4 text-center">${c.qty}</span>
+                            <button onclick="updateCart(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-bold text-xs">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalEl.textContent = `₹${total}`;
+            prepEl.textContent = `~${maxPrep + 2} mins`;
+        }
+
+        function placeOrder() {
+            if (cart.length === 0) {
+                showToast("Please add at least one food item to your tray!", "amber");
+                return;
+            }
+
+            const studentName = document.getElementById('student-name').value.trim() || "Student (Walk-in)";
+            const slot = document.getElementById('pickup-slot').value;
+            const payment = document.getElementById('payment-mode').value;
+
+            let total = 0;
+            const orderItems = cart.map(c => {
+                const item = menuItems.find(m => m.id === c.id);
+                total += item.price * c.qty;
+                return { name: item.name, qty: c.qty, price: item.price };
+            });
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const randomTxn = "TXN" + Math.floor(100000 + Math.random() * 900000);
+
+            const newOrder = {
+                token: nextTokenNumber++,
+                txnId: randomTxn,
+                student: studentName,
+                slot: slot,
+                payment: payment,
+                status: 'pending',
+                time: timeStr,
+                total: total,
+                items: orderItems
+            };
+
+            orders.unshift(newOrder);
+            cart = [];
+            saveStateToSession();
+            if (window.saveOrderToCloud) window.saveOrderToCloud(newOrder);
+            renderAll();
+
+            // Automatically open the generated Digital Bill for the student
+            showOrderBill(newOrder.token);
+            showToast(`🧾 Bill generated for Token #${newOrder.token}!`, "emerald");
+        }
+
+        function showOrderBill(tokenNum) {
+            const order = orders.find(o => o.token === tokenNum);
+            if (!order) return;
+
+            document.getElementById('bill-token').textContent = `#${order.token}`;
+            document.getElementById('bill-slot').textContent = order.slot;
+            document.getElementById('bill-student').textContent = order.student;
+            document.getElementById('bill-meta').textContent = `INV-${order.token} • ${order.time}`;
+            document.getElementById('bill-payment').textContent = `✓ ${order.payment}`;
+            document.getElementById('bill-txn').textContent = order.txnId || `TXN408${order.token}`;
+            document.getElementById('bill-total').textContent = `₹${order.total}`;
+
+            const tbody = document.getElementById('bill-items-tbody');
+            tbody.innerHTML = order.items.map(item => {
+                // Fallback unit price lookup if older order object didn't store unit price
+                const foundMenu = menuItems.find(m => m.name === item.name);
+                const unitPrice = item.price || (foundMenu ? foundMenu.price : Math.round(order.total / item.qty));
+                const lineTotal = unitPrice * item.qty;
+                return `
+                    <tr>
+                        <td class="py-2 font-medium text-slate-800">${item.name}</td>
+                        <td class="py-2 text-center font-semibold">${item.qty}</td>
+                        <td class="py-2 text-right text-slate-500">₹${unitPrice}</td>
+                        <td class="py-2 text-right font-bold text-slate-900">₹${lineTotal}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('bill-modal').classList.remove('hidden');
+        }
+
+        function closeBillModal() {
+            document.getElementById('bill-modal').classList.add('hidden');
+        }
+
+        function renderStudentActiveOrders() {
+            const container = document.getElementById('student-active-orders');
+            const active = orders.filter(o => o.status !== 'completed');
+
+            if (active.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 col-span-2">No active orders right now. Place an order below to generate your digital token and bill!</p>`;
+                return;
+            }
+
+            container.innerHTML = active.map(order => {
+                let badge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">⏳ Ordered</span>`;
+                let bar = `<div class="h-1.5 w-1/3 bg-amber-500 rounded-full"></div>`;
+                let border = 'border-slate-200 bg-white';
+
+                if (order.status === 'preparing') {
+                    badge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">🍳 Cooking</span>`;
+                    bar = `<div class="h-1.5 w-2/3 bg-blue-500 rounded-full"></div>`;
+                } else if (order.status === 'ready') {
+                    badge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500 text-white">✅ Collect Now!</span>`;
+                    bar = `<div class="h-1.5 w-full bg-emerald-500 rounded-full"></div>`;
+                    border = 'border-2 border-emerald-500 bg-emerald-50/30 token-ready-card';
+                }
+
+                return `
+                    <div class="p-3 rounded-xl border ${border} flex flex-col justify-between gap-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-black text-sm shrink-0">#${order.token}</span>
+                                <div class="truncate">
+                                    <p class="font-bold text-slate-800 text-xs truncate">${order.student}</p>
+                                    <p class="text-[11px] text-slate-500">${order.slot} • ₹${order.total}</p>
+                                </div>
+                            </div>
+                            ${badge}
+                        </div>
+                        <p class="text-xs text-slate-600 truncate">${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</p>
+                        <div class="flex items-center justify-between gap-3 pt-1">
+                            <div class="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">${bar}</div>
+                            <button onclick="showOrderBill(${order.token})" class="shrink-0 text-[11px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2.5 py-1 rounded-lg transition">
+                                🧾 View Bill
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCanteenDashboard() {
+            const pending = orders.filter(o => o.status === 'pending');
+            const preparing = orders.filter(o => o.status === 'preparing');
+            const ready = orders.filter(o => o.status === 'ready');
+            const revenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-preparing').textContent = preparing.length;
+            document.getElementById('stat-ready').textContent = ready.length;
+            document.getElementById('stat-revenue').textContent = `₹${revenue}`;
+
+            document.getElementById('col-count-pending').textContent = pending.length;
+            document.getElementById('col-count-preparing').textContent = preparing.length;
+            document.getElementById('col-count-ready').textContent = ready.length;
+
+            document.getElementById('canteen-col-pending').innerHTML = pending.length
+                ? pending.map(o => buildOrderCard(o, 'pending')).join('')
+                : `<p class="text-xs text-amber-800/60 text-center py-5">No new orders waiting.</p>`;
+
+            document.getElementById('canteen-col-preparing').innerHTML = preparing.length
+                ? preparing.map(o => buildOrderCard(o, 'preparing')).join('')
+                : `<p class="text-xs text-blue-800/60 text-center py-5">No orders cooking.</p>`;
+
+            document.getElementById('canteen-col-ready').innerHTML = ready.length
+                ? ready.map(o => buildOrderCard(o, 'ready')).join('')
+                : `<p class="text-xs text-emerald-800/60 text-center py-5">No trays waiting.</p>`;
+
+            // Stock control buttons
+            document.getElementById('canteen-stock-grid').innerHTML = menuItems.map(item => `
+                <button onclick="toggleItemStock(${item.id})" class="p-2.5 rounded-xl border text-left transition flex items-center justify-between ${item.inStock ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-200'}">
+                    <div class="truncate pr-1">
+                        <p class="text-xs font-bold text-slate-800 truncate">${item.emoji} ${item.name}</p>
+                        <p class="text-[10px] font-semibold ${item.inStock ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${item.inStock ? '● In Stock' : '○ Sold Out'}
+                        </p>
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded-md font-bold ${item.inStock ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-200 text-rose-900'}">
+                        ${item.inStock ? 'ON' : 'OFF'}
+                    </span>
+                </button>
+            `).join('');
+
+            // Stored Orders Database Table
+            document.getElementById('database-log-tbody').innerHTML = orders.map(o => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2.5 font-black text-slate-900">#${o.token}</td>
+                    <td class="p-2.5 font-medium text-slate-800">${o.student}</td>
+                    <td class="p-2.5 text-slate-600">${o.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</td>
+                    <td class="p-2.5 text-slate-600">${o.slot}</td>
+                    <td class="p-2.5 font-bold text-slate-800">₹${o.total}</td>
+                    <td class="p-2.5">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            o.status === 'ready' ? 'bg-emerald-100 text-emerald-800' :
+                            o.status === 'preparing' ? 'bg-blue-100 text-blue-800' :
+                            o.status === 'completed' ? 'bg-slate-200 text-slate-600' :
+                            'bg-amber-100 text-amber-800'
+                        }">${o.status}</span>
+                    </td>
+                    <td class="p-2.5 text-right">
+                        <button onclick="showOrderBill(${o.token})" class="text-[11px] font-bold text-indigo-600 hover:underline">
+                            🧾 Bill
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function buildOrderCard(order, stage) {
+            let btn = '';
+            if (stage === 'pending') {
+                btn = `<button onclick="updateOrderStatus(${order.token}, 'preparing')" class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition">🍳 Start Preparing →</button>`;
+            } else if (stage === 'preparing') {
+                btn = `<button onclick="updateOrderStatus(${order.token}, 'ready')" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">🔔 Mark Ready →</button>`;
+            } else if (stage === 'ready') {
+                btn = `<button onclick="updateOrderStatus(${order.token}, 'completed')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">✔️ Handed Over</button>`;
+            }
+
+            return `
+                <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="px-2 py-0.5 rounded-lg bg-slate-900 text-white font-black text-xs">#${order.token}</span>
+                            <div class="truncate">
+                                <p class="font-bold text-xs text-slate-800 truncate">${order.student}</p>
+                                <p class="text-[10px] text-slate-400">${order.time}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md shrink-0">${order.slot}</span>
+                    </div>
+                    <ul class="space-y-0.5 text-xs text-slate-700 font-medium">
+                        ${order.items.map(i => `<li class="flex justify-between"><span>• ${i.name}</span><span class="font-bold">×${i.qty}</span></li>`).join('')}
+                    </ul>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                        <button onclick="showOrderBill(${order.token})" class="text-emerald-700 hover:underline font-semibold">🧾 ${order.payment} (View Bill)</button>
+                        <span class="font-bold text-slate-800">₹${order.total}</span>
+                    </div>
+                    ${btn}
+                </div>
+            `;
+        }
+
+        function updateOrderStatus(token, newStatus) {
+            const order = orders.find(o => o.token === token);
+            if (!order) return;
+            order.status = newStatus;
+            saveStateToSession();
+            if (window.saveOrderToCloud) window.saveOrderToCloud(order);
+            renderAll();
+
+            if (newStatus === 'preparing') showToast(`🍳 Token #${token} moved to Kitchen.`, "blue");
+            else if (newStatus === 'ready') showToast(`🔔 Token #${token} is READY at Express Counter!`, "emerald");
+            else if (newStatus === 'completed') showToast(`✔️ Token #${token} completed!`, "slate");
+        }
+
+        function toggleItemStock(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+            item.inStock = !item.inStock;
+            if (!item.inStock) cart = cart.filter(c => c.id !== itemId);
+            saveStateToSession();
+            renderAll();
+            showToast(`${item.name} marked as ${item.inStock ? 'In Stock' : 'Sold Out'}.`, "slate");
+        }
+
+        function addSimulatedRushOrder() {
+            const students = ["Aditya Joshi (ME-21)", "Tanvi Kulkarni (AIDS-07)", "Omkar Shinde (CIVIL-33)", "Ananya Rao (CS-12)"];
+            const randomStudent = students[Math.floor(Math.random() * students.length)];
+            const available = menuItems.filter(m => m.inStock);
+            if (available.length === 0) return;
+
+            const pick = available[Math.floor(Math.random() * available.length)];
+            const newOrder = {
+                token: nextTokenNumber++,
+                txnId: "TXN" + Math.floor(100000 + Math.random() * 900000),
+                student: randomStudent,
+                slot: "1:15 PM Break",
+                payment: "UPI Instant Pay",
+                status: "pending",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                total: pick.price,
+                items: [{ name: pick.name, qty: 1, price: pick.price }]
+            };
+            orders.unshift(newOrder);
+            saveStateToSession();
+            if (window.saveOrderToCloud) window.saveOrderToCloud(newOrder);
+            renderAll();
+            showToast(`⚡ Incoming Order #${newOrder.token} saved to database!`, "amber");
+        }
+
+        function renderReadyTokensBanner() {
+            const readyContainer = document.getElementById('live-ready-tokens');
+            const readyList = orders.filter(o => o.status === 'ready');
+            if (readyList.length === 0) {
+                readyContainer.innerHTML = `<span class="text-xs text-slate-400">No tokens waiting at counter</span>`;
+                return;
+            }
+            readyContainer.innerHTML = readyList.map(o => `
+                <span class="px-2.5 py-0.5 rounded-lg bg-emerald-400 text-slate-950 font-black text-xs shadow-sm">
+                    #${o.token} (${o.student.split(' ')[0]})
+                </span>
+            `).join('');
+        }
+
+        function showToast(message, color = "slate") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgMap = {
+                emerald: "bg-emerald-600",
+                amber: "bg-amber-600",
+                blue: "bg-blue-600",
+                slate: "bg-slate-800"
+            };
+            toast.className = `${bgMap[color] || 'bg-slate-800'} text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg border border-white/10 transition-all duration-300`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        function renderAll() {
+            renderReadyTokensBanner();
+            renderStudentActiveOrders();
+            renderMenu();
+            renderCart();
+            renderCanteenDashboard();
+        }
+
+        window.onload = function () {
+            loadStateFromSession();
+            renderAll();
+        };
+    </script>
+
+    <!-- Automatic Cloud Database Sync (Works automatically in live preview & falls back to session storage on static hosts) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        async function initCloudSync() {
+            if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'quickbite-campus-app';
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (!user) return;
+                    const statusText = document.getElementById('db-status-text');
+                    if (statusText) statusText.textContent = "Cloud DB Active";
+
+                    const ordersCol = collection(db, 'artifacts', appId, 'public', 'data', 'canteen_orders');
+
+                    window.saveOrderToCloud = async (orderObj) => {
+                        if (!auth.currentUser) return;
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'canteen_orders', String(orderObj.token));
+                        await setDoc(docRef, {
+                            ...orderObj,
+                            itemsJson: JSON.stringify(orderObj.items || [])
+                        });
+                    };
+
+                    window.syncOrderBatchToCloud = async (orderList) => {
+                        if (!auth.currentUser) return;
+                        for (const o of orderList) {
+                            await window.saveOrderToCloud(o);
+                        }
+                    };
+
+                    onSnapshot(ordersCol, (snapshot) => {
+                        if (snapshot.empty) {
+                            window.syncOrderBatchToCloud(orders);
+                            return;
+                        }
+                        const cloudOrders = [];
+                        let maxTok = 103;
+                        snapshot.forEach(d => {
+                            const data = d.data();
+                            const tok = Number(data.token) || 101;
+                            if (tok > maxTok) maxTok = tok;
+                            cloudOrders.push({
+                                token: tok,
+                                txnId: data.txnId || `TXN408${tok}`,
+                                student: data.student || "Student",
+                                slot: data.slot || "1:15 PM Break",
+                                payment: data.payment || "UPI Instant Pay",
+                                status: data.status || "pending",
+                                time: data.time || "Just now",
+                                total: Number(data.total) || 0,
+                                items: data.itemsJson ? JSON.parse(data.itemsJson) : (data.items || [])
+                            });
+                        });
+                        cloudOrders.sort((a, b) => b.token - a.token);
+                        orders = cloudOrders;
+                        nextTokenNumber = maxTok + 1;
+                        saveStateToSession();
+                        renderAll();
+                    }, (err) => {
+                        console.warn("Cloud listener fallback:", err);
+                    });
+                });
+            } catch (e) {
+                console.log("Running with built-in browser session database.");
+            }
+        }
+        initCloudSync();
+    </script>
+</body>
+</html>
